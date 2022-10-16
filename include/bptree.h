@@ -277,7 +277,7 @@ public:
     Iterator & operator++()
     {
         ++m_pos;
-        if (m_pos >= m_current->size() && m_current->right != nullptr) {
+        if (m_pos >= m_current->size() && m_current->right) {
             m_pos = 0;
             m_current = m_current->right;
         }
@@ -345,7 +345,7 @@ template <class Key, class Value, std::size_t BlockSize, class Less>
 inline auto BPTree<Key, Value, BlockSize, Less>::copy(Node * node)
         -> Node *
 {
-    if (node->get_child(0) == nullptr) {
+    if (!node->get_child(0)) {
         return new Leaf(*dynamic_cast<Leaf *>(node));
     }
     else {
@@ -362,9 +362,9 @@ inline auto BPTree<Key, Value, BlockSize, Less>::copy(Node * node)
 template <class Key, class Value, std::size_t BlockSize, class Less>
 inline void BPTree<Key, Value, BlockSize, Less>::redirect()
 {
-    if (m_root != nullptr && m_root->get_child(0) != nullptr) {
+    if (m_root && m_root->get_child(0)) {
         Leaf * leaf = find_min_leaf(m_root);
-        if (leaf->parent == nullptr) {
+        if (!leaf->parent) {
             return;
         }
         Inner * node = leaf->parent;
@@ -373,7 +373,7 @@ inline void BPTree<Key, Value, BlockSize, Less>::redirect()
             leaf->right = dynamic_cast<Leaf *>(node->get_child(ind + 1));
         }
         Inner * next = find_right(node);
-        while (next != nullptr) {
+        while (next) {
             leaf = dynamic_cast<Leaf *>(node->get_child(node->size()));
             leaf->right = dynamic_cast<Leaf *>(next->get_child(0));
             node = next;
@@ -407,7 +407,7 @@ template <class Key, class Value, std::size_t BlockSize, class Less>
 inline auto BPTree<Key, Value, BlockSize, Less>::find_min_leaf(Node * node)
         -> Leaf *
 {
-    while (node->get_child(0) != nullptr) {
+    while (node->get_child(0)) {
         node = node->get_child(0);
     }
     return dynamic_cast<Leaf *>(node);
@@ -417,7 +417,7 @@ template <class Key, class Value, std::size_t BlockSize, class Less>
 inline auto BPTree<Key, Value, BlockSize, Less>::find_max_leaf(Node * node)
         -> Leaf *
 {
-    while (node->get_child(node->size()) != nullptr) {
+    while (node->get_child(node->size())) {
         node = node->get_child(node->size());
     }
     return dynamic_cast<Leaf *>(node);
@@ -513,7 +513,7 @@ inline auto BPTree<Key, Value, BlockSize, Less>::search(const Key & key) const
         -> std::pair<Leaf *, size_type>
 {
     Node * node = m_root;
-    while (node->get_child(0) != nullptr) {
+    while (node->get_child(0)) {
         size_type ind = node->get_ind(key);
         node = node->get_child(ind);
     }
@@ -527,7 +527,7 @@ inline auto BPTree<Key, Value, BlockSize, Less>::lower_bound(const Key & key)
         -> iterator
 {
     auto [leaf, pos] = search(key);
-    if (pos >= leaf->size() && leaf->right != nullptr) {
+    if (pos >= leaf->size() && leaf->right) {
         return iterator(leaf->right);
     }
     return iterator(leaf, pos);
@@ -538,7 +538,7 @@ inline auto BPTree<Key, Value, BlockSize, Less>::lower_bound(const Key & key) co
         -> const_iterator
 {
     auto [leaf, pos] = search(key);
-    if (pos >= leaf->size() && leaf->right != nullptr) {
+    if (pos >= leaf->size() && leaf->right) {
         return const_iterator(leaf->right);
     }
     return const_iterator(leaf, pos);
@@ -688,7 +688,7 @@ inline void BPTree<Key, Value, BlockSize, Less>::split(Leaf * left)
     right->right = left->right;
     left->right = right;
 
-    if (left->parent == nullptr) {
+    if (!left->parent) {
         m_root = new Inner;
         Inner * parent = dynamic_cast<Inner *>(m_root);
         parent->m_children.push_back(left);
@@ -721,7 +721,7 @@ inline void BPTree<Key, Value, BlockSize, Less>::split(Inner * left)
         i->parent = right;
     }
 
-    if (left->parent == nullptr) {
+    if (!left->parent) {
         m_root = new Inner;
         Inner * parent = dynamic_cast<Inner *>(m_root);
         parent->m_children.push_back(left);
@@ -748,7 +748,7 @@ template <class Key, class Value, std::size_t BlockSize, class Less>
 inline auto BPTree<Key, Value, BlockSize, Less>::find_left(Leaf * leaf)
         -> Leaf *
 {
-    if (leaf == nullptr || leaf->size() == 0 || leaf->parent == nullptr) {
+    if (!leaf || leaf->size() == 0 || !leaf->parent) {
         return nullptr;
     }
     const Key & key = leaf->get_key(0);
@@ -756,13 +756,13 @@ inline auto BPTree<Key, Value, BlockSize, Less>::find_left(Leaf * leaf)
     Inner * node = parent;
     size_type height = 0;
     size_type ind = 0;
-    while (parent != nullptr && ind == 0) {
+    while (parent && ind == 0) {
         node = parent;
         ++height;
         parent = node->parent;
         ind = node->get_ind(key);
     }
-    if (parent == nullptr && ind == 0) {
+    if (!parent && ind == 0) {
         return nullptr;
     }
     if (height < 2) {
@@ -779,20 +779,20 @@ template <class Key, class Value, std::size_t BlockSize, class Less>
 inline auto BPTree<Key, Value, BlockSize, Less>::find_left(Inner * node)
         -> Inner *
 {
-    if (node == nullptr || node->size() == 0 || node->parent == nullptr) {
+    if (!node || node->size() == 0 || !node->parent) {
         return nullptr;
     }
     const Key & key = node->get_key(0);
     Inner * parent = node->parent;
     size_type height = 0;
     size_type ind = 0;
-    while (parent != nullptr && ind == 0) {
+    while (parent && ind == 0) {
         node = parent;
         ++height;
         parent = node->parent;
         ind = node->get_ind(key);
     }
-    if (parent == nullptr && ind == 0) {
+    if (!parent && ind == 0) {
         return nullptr;
     }
     node = dynamic_cast<Inner *>(node->get_child(ind - 1));
@@ -813,20 +813,20 @@ template <class Key, class Value, std::size_t BlockSize, class Less>
 inline auto BPTree<Key, Value, BlockSize, Less>::find_right(Inner * node)
         -> Inner *
 {
-    if (node == nullptr || node->size() == 0 || node->parent == nullptr) {
+    if (!node || node->size() == 0 || !node->parent) {
         return nullptr;
     }
     const Key & key = node->get_key(0);
     Inner * parent = node->parent;
     size_type height = 0;
     size_type ind = node->size();
-    while (parent != nullptr && ind >= node->size()) {
+    while (parent && ind >= node->size()) {
         node = parent;
         ++height;
         parent = node->parent;
         ind = node->get_ind(key);
     }
-    if (parent == nullptr && ind >= node->size()) {
+    if (!parent && ind >= node->size()) {
         return nullptr;
     }
     node = dynamic_cast<Inner *>(node->get_child(ind + 1));
@@ -904,12 +904,12 @@ inline bool BPTree<Key, Value, BlockSize, Less>::erase(Leaf * node, size_type po
         return true;
     }
 
-    if (left != nullptr && left->size() > m_order / 2 && !less(minimum, node->parent->get_key(0))) {
+    if (left && left->size() > m_order / 2 && !less(minimum, node->parent->get_key(0))) {
         node->m_data.insert(node->m_data.begin(), left->m_data.back());
         left->m_data.pop_back();
         update(node, minimum, node->get_key(0));
     }
-    else if (right != nullptr && right->size() > m_order / 2) {
+    else if (right && right->size() > m_order / 2) {
         node->m_data.insert(node->m_data.end(), right->m_data.front());
         right->m_data.erase(right->m_data.begin());
         if (node->size() == 1) {
@@ -917,14 +917,14 @@ inline bool BPTree<Key, Value, BlockSize, Less>::erase(Leaf * node, size_type po
         }
         update(right, node->m_data.back().first, right->get_key(0));
     }
-    else if (left != nullptr && !less(minimum, node->parent->get_key(0))) {
+    else if (left && !less(minimum, node->parent->get_key(0))) {
         merge(left, node, minimum);
     }
-    else if (right != nullptr) {
+    else if (right) {
         merge(node, right, right->get_key(0));
     }
 
-    if (m_root->size() == 0 && m_root->get_child(0) != nullptr) {
+    if (m_root->size() == 0 && m_root->get_child(0)) {
         m_root = m_root->get_child(0);
         m_root->parent->m_children[0] = nullptr;
         clear(m_root->parent);
@@ -941,7 +941,7 @@ inline void BPTree<Key, Value, BlockSize, Less>::merge(Leaf * left, Leaf * right
     left->right = right->right;
     right->right = nullptr;
     Inner * parent = right->parent;
-    if (parent != nullptr) {
+    if (parent) {
         size_type ind = parent->get_ind(key);
         erase(parent, ind, key);
     }
@@ -968,7 +968,7 @@ inline void BPTree<Key, Value, BlockSize, Less>::erase(Inner * node, size_type p
         return;
     }
 
-    if (left != nullptr && left->size() > m_order / 2 && !less(minimum, node->parent->get_key(0))) {
+    if (left && left->size() > m_order / 2 && !less(minimum, node->parent->get_key(0))) {
         node->m_keys.insert(node->m_keys.begin(), find_min_leaf(node)->get_key(0));
         left->m_keys.pop_back();
         node->m_children.insert(node->m_children.begin(), left->m_children.back());
@@ -976,7 +976,7 @@ inline void BPTree<Key, Value, BlockSize, Less>::erase(Inner * node, size_type p
         left->m_children.pop_back();
         update(node, minimum, find_min_leaf(node)->get_key(0));
     }
-    else if (right != nullptr && right->size() > m_order / 2) {
+    else if (right && right->size() > m_order / 2) {
         node->m_keys.insert(node->m_keys.end(), find_min_leaf(right)->get_key(0));
         right->m_keys.erase(right->m_keys.begin());
         node->m_children.insert(node->m_children.end(), right->m_children.front());
@@ -987,10 +987,10 @@ inline void BPTree<Key, Value, BlockSize, Less>::erase(Inner * node, size_type p
         }
         update(right, node->m_keys.back(), find_min_leaf(right)->get_key(0));
     }
-    else if (left != nullptr && !less(minimum, node->parent->get_key(0))) {
+    else if (left && !less(minimum, node->parent->get_key(0))) {
         merge(left, node, minimum);
     }
-    else if (right != nullptr) {
+    else if (right) {
         merge(node, right, right->get_key(0));
     }
 }
@@ -1006,7 +1006,7 @@ inline void BPTree<Key, Value, BlockSize, Less>::merge(Inner * left, Inner * rig
         right->m_children[i] = nullptr;
     }
     Inner * parent = right->parent;
-    if (parent != nullptr) {
+    if (parent) {
         size_type ind = parent->get_ind(key);
         erase(parent, ind, key);
     }
@@ -1015,14 +1015,14 @@ inline void BPTree<Key, Value, BlockSize, Less>::merge(Inner * left, Inner * rig
 template <class Key, class Value, std::size_t BlockSize, class Less>
 inline void BPTree<Key, Value, BlockSize, Less>::update(Node * node, const Key & prev, const Key & key)
 {
-    if (node == nullptr) {
+    if (!node) {
         return;
     }
     Inner * parent = node->parent;
-    if (parent == nullptr) {
+    if (!parent) {
         return;
     }
-    while (parent != nullptr) {
+    while (parent) {
         size_type ind = parent->get_ind(prev);
         if (ind > 0) {
             parent->m_keys[ind - 1] = key;
@@ -1044,7 +1044,7 @@ inline void BPTree<Key, Value, BlockSize, Less>::clear()
 template <class Key, class Value, std::size_t BlockSize, class Less>
 inline void BPTree<Key, Value, BlockSize, Less>::clear(Node * node)
 {
-    if (node->get_child(0) != nullptr) {
+    if (node->get_child(0)) {
         for (size_type ind = 0; ind <= node->size(); ++ind) {
             clear(node->get_child(ind));
         }
